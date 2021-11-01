@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include<iostream>
+#include <fstream>
 #include "stdint.h" 
 
+using namespace std;
 extern "C"
 {
 #include "x264.h"
@@ -25,6 +28,12 @@ int main(int argc, char** argv)
          FILE* fp_bps_delta_dst = fopen("bbb_bps_delta.txt", "wt+");
          //Encode 50 frame
          //if set 0, encode all frame
+         ifstream infile;
+         infile.open("bandwithbps.txt");
+         int bandwidth[657] = { 0 };
+         for (int i = 0; i < 657; i++) {
+              infile >> bandwidth[i];
+         }
          int frame_num=0;
          int csp=X264_CSP_I420;
          int width=640,height=360;
@@ -67,7 +76,7 @@ int main(int argc, char** argv)
          pParam->rc.i_rc_method = X264_RC_ABR;
          pParam->rc.i_bitrate = 400;
          pParam->rc.i_vbv_max_bitrate = 400;
-         pParam->rc.i_vbv_buffer_size = 1000;
+         pParam->rc.i_vbv_buffer_size = 1600;
          pParam -> i_bframe = 0; 
 
          x264_param_apply_profile(pParam, x264_profile_names[5]);
@@ -113,9 +122,9 @@ int main(int argc, char** argv)
 
                    
                    if(i % 25 == 0) {
-                        pParam->rc.i_bitrate += 1;
-                        pParam->rc.i_vbv_max_bitrate += 1;
-                        pParam->rc.i_vbv_buffer_size += 2;
+                        pParam->rc.i_bitrate = bandwidth[i/25];
+                        pParam->rc.i_vbv_max_bitrate = bandwidth[i/25];
+                        pParam->rc.i_vbv_buffer_size = bandwidth[i/25] * 4;
                    }
                    
 
