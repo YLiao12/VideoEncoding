@@ -19,24 +19,24 @@ int main(int argc, char** argv)
          int i,j;
  
          //FILE* fp_src  = fopen("../cuc_ieschool_640x360_yuv444p.yuv", "rb");
-         FILE* fp_src  = fopen("bbb.yuv", "rb");
+         FILE* fp_src  = fopen("bbb1080.yuv", "rb");
  
-         FILE* fp_dst = fopen("bbb.h264", "wb");
-         FILE* fp_output_dst = fopen("bbb_output.txt", "wt+");
-         FILE* fp_delta_dst = fopen("bbb_delta.txt", "wt+");
-         FILE* fp_bps_dst = fopen("bbb_bps.txt", "wt+");
-         FILE* fp_bps_delta_dst = fopen("bbb_bps_delta.txt", "wt+");
+         FILE* fp_dst = fopen("bbb_intra_refresh.h264", "wb");
+         FILE* fp_output_dst = fopen("bbb_output_1080_10M_intra_refresh.txt", "wt+");
+         FILE* fp_delta_dst = fopen("bbb_delta_1080_10M_intra_refresh.txt", "wt+");
+         FILE* fp_bps_dst = fopen("bbb_bps_1080_10M_intra_refresh.txt", "wt+");
+         FILE* fp_bps_delta_dst = fopen("bbb_bps_delta_1080_10M_intra_refresh.txt", "wt+");
          //Encode 50 frame
          //if set 0, encode all frame
          ifstream infile;
-         infile.open("bandwithbps.txt");
-         int bandwidth[657] = { 0 };
-         for (int i = 0; i < 657; i++) {
+         infile.open("bandwidthbps10M.txt");
+         int bandwidth[654] = { 0 };
+         for (int i = 0; i < 654; i++) {
               infile >> bandwidth[i];
          }
          int frame_num=0;
          int csp=X264_CSP_I420;
-         int width=640,height=360;
+         int width=1920,height=1080;
  
          int iNal   = 0;
          x264_nal_t* pNals = NULL;
@@ -52,6 +52,7 @@ int main(int argc, char** argv)
          }
  
          x264_param_default(pParam);
+         x264_param_default_preset(pParam, "ultrafast", "zerolatency");
          pParam->i_width   = width;
          pParam->i_height  = height;
          /*
@@ -77,7 +78,10 @@ int main(int argc, char** argv)
          pParam->rc.i_bitrate = 400;
          pParam->rc.i_vbv_max_bitrate = 400;
          pParam->rc.i_vbv_buffer_size = 1600;
+         // pParam->rc.i_lookahead = 50;
          pParam -> i_bframe = 0; 
+         pParam -> b_intra_refresh=1;
+         pParam -> i_frame_reference = 1;
 
          x264_param_apply_profile(pParam, x264_profile_names[5]);
         
@@ -102,7 +106,7 @@ int main(int argc, char** argv)
         
         int bitratebps = 0;
          //Loop to Encode
-         for( i=0;i<frame_num;i++){
+         for( i=0;i<3000;i++){
                    switch(csp){
                    case X264_CSP_I444:{
                             fread(pPic_in->img.plane[0],y_size,1,fp_src);         //Y
@@ -124,7 +128,9 @@ int main(int argc, char** argv)
                    if(i % 25 == 0) {
                         pParam->rc.i_bitrate = bandwidth[i/25];
                         pParam->rc.i_vbv_max_bitrate = bandwidth[i/25];
-                        pParam->rc.i_vbv_buffer_size = bandwidth[i/25] * 4;
+                        pParam->rc.i_vbv_buffer_size = bandwidth[i/25];
+                        pParam -> b_intra_refresh=1;
+                        pParam -> i_frame_reference = 1;
                    }
                    
 
