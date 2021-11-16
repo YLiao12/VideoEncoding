@@ -151,7 +151,7 @@ int main(int argc, char** argv)
                     
                    printf("Succeed encode frame: %5d\n",i);
                    fprintf(fp_output_dst, "frame: %d  target size: %d   actual size: %d\n", i, pParam->rc.i_bitrate * 5, ret);
-                   int delta = (pParam->rc.i_bitrate * 5 - ret) /  / (pParam ->rc.i_bitrate * 5);
+                   float delta = (float)(pParam->rc.i_bitrate * 5 - ret) * 1000 / (float)(pParam ->rc.i_bitrate * 5);
                    fprintf(fp_delta_dst, "%d\n", delta);
  
                    for ( j = 0; j < iNal; ++j){
