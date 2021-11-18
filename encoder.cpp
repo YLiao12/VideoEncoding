@@ -18,18 +18,18 @@ int main(int argc, char **argv)
      int i, j;
 
      //FILE* fp_src  = fopen("../cuc_ieschool_640x360_yuv444p.yuv", "rb");
-     FILE *fp_src = fopen("Johnny.yuv", "rb");
+     FILE *fp_src = fopen("bbb1080.yuv", "rb");
 
-     FILE *fp_dst = fopen("Johnny.h264", "wb");
-     FILE *fp_output_dst = fopen("Johnny_output_720_4M.txt", "wt+");
-     FILE *fp_delta_dst = fopen("Johnny_delta_720_4M.txt", "wt+");
+     FILE *fp_dst = fopen("bbb1080.h264", "wb");
+     FILE *fp_output_dst = fopen("bbb1080_output_donothing.txt", "wt+");
+     FILE *fp_delta_dst = fopen("bbb1080_delta_donothing.txt", "wt+");
      // FILE *fp_bps_dst = fopen("Johnny_bps_720_4M.txt", "wt+");
      // FILE *fp_bps_delta_dst = fopen("Johnny_bps_delta_720_4M.txt", "wt+");
-     FILE *fp_time = fopen("Jonny_donothing.txt", "wt+");
+     FILE *fp_time = fopen("bbb_donothing.txt", "wt+");
      //Encode 50 frame
      //if set 0, encode all frame
      ifstream infile;
-     infile.open("bandwidthbps.txt");
+     infile.open("bandwidthbps10M.txt");
      int bandwidth[654] = {0};
      for (int i = 0; i < 654; i++)
      {
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
      }
      int frame_num = 0;
      int csp = X264_CSP_I420;
-     int width = 1280, height = 720;
+     int width = 1920, height = 1080;
 
      int iNal = 0;
      x264_nal_t *pNals = NULL;
@@ -82,8 +82,8 @@ int main(int argc, char **argv)
      pParam->rc.i_vbv_buffer_size = 1600;
      // pParam->rc.i_lookahead = 50;
      pParam->i_bframe = 0;
-     //pParam -> b_intra_refresh=1;
-     //pParam -> i_frame_reference = 1;
+     pParam -> b_intra_refresh=1;
+     pParam -> i_frame_reference = 1;
 
      x264_param_apply_profile(pParam, x264_profile_names[5]);
 
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
      float consuming_time = 0.0;
      float delay_time = 0.5;
      //Loop to Encode
-     for (i = 0; i < frame_num; i++)
+     for (i = 0; i < 6000; i++)
      {
           switch (csp)
           {
@@ -162,14 +162,18 @@ int main(int argc, char **argv)
           }
 
           // do nothing if the frame arriving time has to be delayed
-          float consuming_time_i = (float)(ret * 8) / (float)(bandwidth[i] * 1000);
-          if (consuming_time_i > 0.04) {
-               consuming_time += consuming_time_i;
-          }
-          else
-               consuming_time += 0.04;
-
+          float consuming_time_i = (float)(ret * 8) / (float)(bandwidth[i / 25] * 1000);
+          // if (consuming_time_i > 0.04) {
+          //      consuming_time += consuming_time_i;
+          // }
+          // else
+          //      consuming_time += 0.04;
+          consuming_time += consuming_time_i;
           delay_time += 0.04;
+
+          if (consuming_time < delay_time - 0.5)
+               consuming_time = delay_time - 0.5;
+
           int delay_frame_flag = 0;
           if (consuming_time > delay_time) {
                delay_frame_flag = 1;
@@ -186,7 +190,8 @@ int main(int argc, char **argv)
           // }
 
           printf("Succeed encode frame: %5d\n", i);
-          fprintf(fp_output_dst, "frame: %d  target size: %d   actual size: %d\n", i, pParam->rc.i_bitrate * 5, ret);
+          fprintf(fp_output_dst, "frame: %d  target size: %d   actual size: %d consuming_time: %.4f   delay_time %.4f  buffer_time: %.4f delay_flag: %d \n", 
+                                        i, pParam->rc.i_bitrate * 5, ret, consuming_time, delay_time, delay_time - consuming_time, delay_frame_flag);
           float delta = (float)(pParam->rc.i_bitrate * 5 - ret) * 1000 / (float)(pParam->rc.i_bitrate * 5);
           fprintf(fp_delta_dst, "%.4f\n", delta);
 
